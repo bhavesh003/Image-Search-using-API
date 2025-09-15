@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hashtag Image Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        input {
+            padding: 10px;
+            width: 60%;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #results {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #results img {
+            width: 200px;
+            height: auto;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #loadMore {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Search Images by Hashtag</h1>
+    <!-- <br>
+    <hr><br>
+    <script async src="https://cse.google.com/cse.js?cx=50ef107630d1243c4">
+    </script>
+    <div class="gcse-search"></div>
+
+    <br>
+    <hr><br> -->
+
+    <input type="text" id="searchQuery">
+    <button onclick="searchImages()">Search</button>
+    <div id="results"></div>
+    <button id="loadMore" onclick="loadMoreImages()">Load More</button>
+
+    <script>
+        let query = "";
+        let startIndex = 1;
+        const apiKey = "AIzaSyDpR1-ycEckccysmp6YNJVNSqq8n0K4cX8";
+        const cx = "50ef107630d1243c4";
+
+        async function searchImages() {
+            query = document.getElementById("searchQuery").value;
+            query = query.replace("#", "");
+            startIndex = 1; // Reset pagination
+
+            document.getElementById("results").innerHTML = "";
+            document.getElementById("loadMore").style.display = "none";
+
+            fetchImages();
+        }
+
+        async function loadMoreImages() {
+            startIndex += 20;
+            fetchImages();
+        }
+
+        async function fetchImages() {
+            let url = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${cx}&searchType=image&start=${startIndex}&key=${apiKey}`;
+
+            try {
+                let response = await fetch(url);
+                let data = await response.json();
+
+                if (data.items) {
+                    let resultsDiv = document.getElementById("results");
+
+                    data.items.forEach((item) => {
+                        let img = document.createElement("img");
+                        img.src = item.link;
+                        resultsDiv.appendChild(img);
+                    });
+
+                    document.getElementById("loadMore").style.display = "block"; // Show load more btn
+                } else {
+                    document.getElementById("results").innerHTML = "<p>No images found.</p>";
+                }
+            } catch (error) {
+                console.error("Error fetching images:", error);
+                document.getElementById("results").innerHTML = "<p>Failed to load images. Please try again.</p>";
+            }
+        }
+
+
+        //new
+
+        // Function to handle broken images and replace them with a placeholder
+        function handleImageError(img) {
+            img.onerror = null; // Prevent infinite loop
+            img.src = "https://via.placeholder.com/200?text=Image+Not+Found"; // Use a placeholder
+        }
+
+        // Function to check if an image URL is valid before displaying it
+        function isValidImageURL(url) {
+            return url.startsWith("http") && (url.endsWith(".jpg") || url.endsWith(".png") || url.endsWith(".jpeg") || url.endsWith(".gif") || url.endsWith(".webp"));
+        }
+
+        // Function to preload images before showing them
+        function preloadImage(url, callback) {
+            let img = new Image();
+            img.src = url;
+            img.onload = () => callback(true, url);
+            img.onerror = () => callback(false, url);
+        }
+
+        // Modify fetchImages to use error handling and URL filtering
+        async function fetchImages() {
+            let url = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${cx}&searchType=image&start=${startIndex}&key=${apiKey}`;
+
+            try {
+                let response = await fetch(url);
+                let data = await response.json();
+
+                if (data.items) {
+                    let resultsDiv = document.getElementById("results");
+
+                    data.items.forEach((item) => {
+                        let imgUrl = item.link;
+
+                        if (isValidImageURL(imgUrl)) {
+                            preloadImage(imgUrl, (success, url) => {
+                                if (success) {
+                                    let img = document.createElement("img");
+                                    img.src = url;
+                                    img.onerror = function () { handleImageError(img); }; // Handle broken images
+                                    resultsDiv.appendChild(img);
+                                } else {
+                                    console.warn("Skipping broken image:", url); // Logs skipped images
+                                }
+                            });
+                        } else {
+                            console.warn("Invalid image URL skipped:", imgUrl);
+                        }
+                    });
+
+                    document.getElementById("loadMore").style.display = "block"; // Show load more button
+                } else {
+                    document.getElementById("results").innerHTML = "<p>No images found.</p>";
+                }
+            } catch (error) {
+                console.error("Error fetching images:", error);
+                document.getElementById("results").innerHTML = "<p>Failed to load images. Please try again.</p>";
+            }
+        }
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
